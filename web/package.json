@@ -1,0 +1,9 @@
+{
+  "name": "linker-chat-web",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r build",
+    "check": "pnpm -r check",
+    "dev:demo": "pnpm --filter @linker-chat/sveltekit-demo dev"
+  }
+}

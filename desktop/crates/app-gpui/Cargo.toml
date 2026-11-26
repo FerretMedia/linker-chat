@@ -1,0 +1,26 @@
+[package]
+name = "linker-chat-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "linker-chat-desktop"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+chat-core = { workspace = true }
+futures = { workspace = true }
+gpui = "0.2.2"
+# gpui 0.2.2 pulls in xattr 0.2.3, which needs `libc::ENOATTR`. libc 0.2.190 removed it.
+libc = ">=0.2.180, <0.2.190"
+providers = { workspace = true }
+reqwest = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true }
+unicode-segmentation = "1"
+
+[lints]
+workspace = true

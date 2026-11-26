@@ -1,0 +1,23 @@
+{
+  "name": "@linker-chat/svelte",
+  "version": "0.1.0",
+  "type": "module",
+  "svelte": "./src/lib/index.ts",
+  "exports": {
+    ".": {
+      "svelte": "./src/lib/index.ts",
+      "types": "./src/lib/index.ts",
+      "default": "./src/lib/index.ts"
+    }
+  },
+  "dependencies": {
+    "@linker-chat/client": "workspace:*"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "svelte": "^5.25.0",
+    "typescript": "^5.8.2"
+  }
+}
