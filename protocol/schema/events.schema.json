@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://linker-chat.dev/protocol/v1/events.schema.json",
+  "title": "Linker-chat WebSocket Frame",
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "auth",
+        "auth_guest",
+        "auth_token",
+        "join",
+        "leave",
+        "send_message",
+        "moderate",
+        "ping",
+        "auth_ok",
+        "room_joined",
+        "room_state",
+        "message",
+        "message_deleted",
+        "user_moderated",
+        "chat_cleared",
+        "system",
+        "error",
+        "pong"
+      ]
+    },
+    "req_id": { "type": "string" },
+    "data": { "type": "object" }
+  },
+  "$defs": {
+    "User": {
+      "type": "object",
+      "required": ["id", "username", "display_name", "color", "is_guest"],
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "display_name": { "type": "string" },
+        "avatar_url": { "type": "string" },
+        "color": { "type": "string" },
+        "role": { "type": "string", "enum": ["broadcaster", "moderator", "vip", "member", "guest"] },
+        "is_guest": { "type": "boolean" },
+        "is_admin": { "type": "boolean" }
+      }
+    },
+    "Emote": {
+      "type": "object",
+      "required": ["code", "url", "animated"],
+      "properties": {
+        "code": { "type": "string" },
+        "url": { "type": "string" },
+        "animated": { "type": "boolean" }
+      }
+    },
+    "ChatMessage": {
+      "type": "object",
+      "required": ["id", "room", "user", "content", "badges", "created_at"],
+      "properties": {
+        "id": { "type": "string" },
+        "room": { "type": "string" },
+        "user": { "$ref": "#/$defs/User" },
+        "content": { "type": "string" },
+        "reply_to_id": { "type": "string" },
+        "badges": { "type": "array", "items": { "type": "string" } },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  }
+}
