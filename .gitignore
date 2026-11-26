@@ -1,0 +1,21 @@
+# Binaries & build artifacts
+/server/bin/
+*.db
+*.db-shm
+*.db-wal
+
+# Node / pnpm / SvelteKit
+node_modules/
+.svelte-kit/
+dist/
+build/
+.vite/
+
+# Rust / Cargo
+/desktop/target/
+
+# Env & editor files
+.env
+.env.local
+.DS_Store
+*.log
