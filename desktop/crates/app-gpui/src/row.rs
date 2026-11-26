@@ -287,13 +287,11 @@ fn removal_label(removal: Option<Removal>) -> Option<Div> {
     Some(pill(label, theme::BAD).ml(px(4.)))
 }
 
-/// An icon button as tall as the bar it sits in.
 fn quick_button(id: &'static str, seq: u64, glyph: Icon, label: &'static str) -> Stateful<Div> {
     icon_button((id, seq), glyph, label)
-        .h_full()
-        .px(px(6.))
-        .border_l_1()
-        .border_color(theme::color(theme::BORDER))
+        .h(px(18.))
+        .px(px(4.))
+        .rounded(px(3.))
 }
 
 /// Buttons that appear over the row under the pointer.
@@ -316,14 +314,17 @@ fn quick_actions(
             pane.moderate(&channel, action.clone(), cx);
         }))
     };
+    // As tall as a one-line row, so the row below cannot paint over it.
     div()
         .absolute()
-        .top_0()
-        .right_0()
-        .h(px(22.))
+        .top(px(0.))
+        .right(px(6.))
+        .h(px(LINE_HEIGHT + 2.))
         .flex()
+        .items_center()
+        .rounded(px(5.))
         .bg(theme::color(theme::RAISED))
-        .border_b_1()
+        .border_1()
         .border_color(theme::color(theme::BORDER))
         .invisible()
         .when(reply.is_some() || moderates, |bar| {

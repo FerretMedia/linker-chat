@@ -19,8 +19,7 @@ use crate::row::{self, RowOptions};
 use crate::text_input::{TextInput, TextInputEvent};
 use crate::theme;
 use crate::ui::{
-    bar_button, dot, icon, icon_button, icon_toggle, pill, platform_pill, primary_button,
-    sign_in_hint, tooltip,
+    dot, icon, icon_button, icon_toggle, pill, platform_pill, primary_button, sign_in_hint, tooltip,
 };
 
 pub enum PaneEvent {
@@ -73,7 +72,7 @@ impl PaneView {
         cx: &mut Context<Self>,
     ) -> Self {
         let composer = cx.new(|cx| TextInput::new("", cx));
-        let search = cx.new(|cx| TextInput::new("Search messages and names", cx));
+        let search = cx.new(|cx| TextInput::new("Search messages and names", cx).boxed());
         let subscriptions = vec![
             cx.observe(&chat, |pane, _, cx| pane.refresh(cx)),
             cx.subscribe(&composer, |pane, _, event, cx| match event {
@@ -392,9 +391,13 @@ impl PaneView {
 
         div()
             .flex()
+            .flex_none()
             .items_center()
-            .h(px(28.))
+            .gap(px(5.))
+            .h(px(30.))
             .pl(px(8.))
+            // Lines the last icon up with the tab bar's.
+            .pr(px(4.))
             .bg(theme::color(theme::PANEL))
             .border_b_1()
             .border_color(theme::color(if self.active {
@@ -451,61 +454,63 @@ impl PaneView {
                             .map(|secs| pill(format!("SLOW {secs}s"), theme::WARN)),
                     ),
             )
-            .when(self.view.is_paused(), |header| {
-                header.child(header_cell(
-                    div()
-                        .id("paused")
-                        .flex()
-                        .items_center()
-                        .tooltip(tooltip("Scrolling is paused"))
-                        .child(icon(Icon::Pause, theme::WARN)),
-                ))
-            })
-            .when(!failed.is_empty(), |header| {
-                header.child(
-                    header_cell(icon_button("retry", Icon::Retry, "Reconnect")).on_click(
-                        cx.listener(move |pane, _, _, cx| {
-                            pane.chat.update(cx, |chat, cx| {
-                                failed.iter().for_each(|key| chat.reconnect(key, cx));
-                            });
-                        }),
+            .child(
+                div()
+                    .flex()
+                    .flex_none()
+                    .items_center()
+                    .gap(px(2.))
+                    .when(self.view.is_paused(), |actions| {
+                        actions.child(
+                            div()
+                                .id("paused")
+                                .flex()
+                                .items_center()
+                                .h(px(22.))
+                                .px(px(5.))
+                                .tooltip(tooltip("Scrolling is paused"))
+                                .child(icon(Icon::Pause, theme::WARN)),
+                        )
+                    })
+                    .when(!failed.is_empty(), |actions| {
+                        actions.child(icon_button("retry", Icon::Retry, "Reconnect").on_click(
+                            cx.listener(move |pane, _, _, cx| {
+                                pane.chat.update(cx, |chat, cx| {
+                                    failed.iter().for_each(|key| chat.reconnect(key, cx));
+                                });
+                            }),
+                        ))
+                    })
+                    .child(
+                        icon_toggle("search", Icon::Search, "Search (Ctrl+F)", self.search_open)
+                            .on_click(
+                                cx.listener(|pane, _, window, cx| pane.toggle_search(window, cx)),
+                            ),
+                    )
+                    .child(
+                        icon_toggle(
+                            // Its own id per state, so the tooltip follows the state.
+                            if merged { "unmerge" } else { "merge" },
+                            if merged { Icon::Merge } else { Icon::Single },
+                            if merged {
+                                "Show one channel"
+                            } else {
+                                "Merge channels"
+                            },
+                            merged,
+                        )
+                        .on_click(cx.listener(|pane, _, _, cx| pane.toggle_merged(cx))),
+                    )
+                    .child(
+                        icon_button("split", Icon::Split, "Add a split").on_click(
+                            cx.listener(|_, _, _, cx| cx.emit(PaneEvent::SplitRequested)),
+                        ),
+                    )
+                    .child(
+                        icon_button("close", Icon::Close, "Close this split (Ctrl+W)").on_click(
+                            cx.listener(|_, _, _, cx| cx.emit(PaneEvent::CloseRequested)),
+                        ),
                     ),
-                )
-            })
-            .child(
-                header_cell(icon_toggle(
-                    "search",
-                    Icon::Search,
-                    "Search (Ctrl+F)",
-                    self.search_open,
-                ))
-                .on_click(cx.listener(|pane, _, window, cx| pane.toggle_search(window, cx))),
-            )
-            .child(
-                header_cell(icon_toggle(
-                    // Its own id per state, so the tooltip follows the state.
-                    if merged { "unmerge" } else { "merge" },
-                    if merged { Icon::Merge } else { Icon::Single },
-                    if merged {
-                        "Show one channel"
-                    } else {
-                        "Merge channels"
-                    },
-                    merged,
-                ))
-                .on_click(cx.listener(|pane, _, _, cx| pane.toggle_merged(cx))),
-            )
-            .child(
-                header_cell(icon_button("split", Icon::Split, "Add a split"))
-                    .on_click(cx.listener(|_, _, _, cx| cx.emit(PaneEvent::SplitRequested))),
-            )
-            .child(
-                header_cell(icon_button(
-                    "close",
-                    Icon::Close,
-                    "Close this split (Ctrl+W)",
-                ))
-                .on_click(cx.listener(|_, _, _, cx| cx.emit(PaneEvent::CloseRequested))),
             )
     }
 
@@ -516,6 +521,10 @@ impl PaneView {
             .id("channels")
             .flex()
             .flex_none()
+            .items_center()
+            .gap(px(5.))
+            .px(px(8.))
+            .py(px(4.))
             .overflow_x_scroll()
             .bg(theme::color(theme::PANEL))
             .border_b_1()
@@ -524,26 +533,27 @@ impl PaneView {
                 let state = self.connection(key, cx);
                 let picked = target.as_ref() == Some(key);
                 let (pick, remove) = (key.clone(), key.clone());
-                // GPUI gives an element one border color, so the divider and the accent need an
-                // element each.
-                let chip = div()
+                div()
                     .id(("channel", index))
                     .flex()
+                    .flex_none()
                     .items_center()
                     .gap(px(4.))
-                    .h_full()
-                    .pl(px(8.))
-                    .border_b_2()
+                    .h(px(22.))
+                    .pl(px(6.))
+                    .pr(px(2.))
+                    .rounded(px(4.))
+                    .bg(theme::color(theme::RAISED))
+                    .border_1()
                     .text_size(px(11.))
                     .cursor_pointer()
                     .map(|chip| {
                         if picked {
-                            chip.bg(theme::color(theme::BACKGROUND))
-                                .border_color(theme::color(theme::ACCENT_BRIGHT))
+                            chip.border_color(theme::color(theme::ACCENT_BRIGHT))
                         } else {
-                            chip.border_color(gpui::transparent_black())
+                            chip.border_color(theme::color(theme::BORDER))
                                 .text_color(theme::color(theme::TEXT_SECONDARY))
-                                .hover(|style| style.bg(theme::color(theme::RAISED)))
+                                .hover(|style| style.bg(theme::color(theme::HOVER)))
                         }
                     })
                     .tooltip(tooltip(connection_label(&state)))
@@ -562,19 +572,14 @@ impl PaneView {
                     )
                     .child(
                         icon_button(("remove", index), Icon::Close, "Remove from this merge")
-                            .h_full()
-                            .px(px(5.))
+                            .h(px(16.))
+                            .px(px(2.))
+                            .rounded(px(3.))
                             .on_click(cx.listener(move |pane, _, _, cx| {
                                 cx.stop_propagation();
                                 pane.remove_channel(&remove, cx);
                             })),
-                    );
-                div()
-                    .flex_none()
-                    .h(px(24.))
-                    .border_r_1()
-                    .border_color(theme::color(theme::BORDER))
-                    .child(chip)
+                    )
             }))
     }
 
@@ -633,32 +638,42 @@ impl PaneView {
             1 => "1 new message".to_owned(),
             count => format!("{count} new messages"),
         };
+        let pill = div()
+            .id("resume")
+            .flex()
+            .items_center()
+            .gap(px(4.))
+            .px(px(12.))
+            .py(px(4.))
+            .rounded_full()
+            .border_1()
+            .shadow_md()
+            .text_size(px(11.))
+            .cursor_pointer()
+            .map(|pill| {
+                if unread > 0 {
+                    pill.bg(theme::color(theme::ACCENT))
+                        .border_color(theme::color(theme::ACCENT_BRIGHT))
+                        .hover(|style| style.bg(theme::color(theme::ACCENT_BRIGHT)))
+                } else {
+                    pill.bg(theme::color(theme::RAISED))
+                        .border_color(theme::color(theme::BORDER))
+                        .hover(|style| style.bg(theme::color(theme::HOVER)))
+                }
+            })
+            .tooltip(tooltip("Jump to the newest message"))
+            .on_click(cx.listener(|pane, _, _, cx| pane.resume(cx)))
+            .child(icon(Icon::Single, theme::TEXT))
+            .child(label);
         Some(
             div()
-                .id("resume")
                 .absolute()
-                .bottom_0()
+                .bottom(px(8.))
                 .left_0()
                 .right_0()
                 .flex()
-                .items_center()
                 .justify_center()
-                .gap(px(4.))
-                .h(px(24.))
-                .bg(theme::color(theme::RAISED))
-                .border_t_1()
-                .border_color(theme::color(if unread > 0 {
-                    theme::ACCENT_BRIGHT
-                } else {
-                    theme::BORDER
-                }))
-                .text_size(px(11.))
-                .cursor_pointer()
-                .hover(|style| style.bg(theme::color(theme::HOVER)))
-                .tooltip(tooltip("Jump to the newest message"))
-                .on_click(cx.listener(|pane, _, _, cx| pane.resume(cx)))
-                .child(icon(Icon::Single, theme::TEXT))
-                .child(label),
+                .child(pill),
         )
     }
 
@@ -696,8 +711,9 @@ impl PaneView {
                 .flex()
                 .items_center()
                 .gap_1()
-                .h(px(24.))
+                .h(px(26.))
                 .pl(px(8.))
+                .pr(px(4.))
                 .border_b_1()
                 .border_color(theme::color(theme::BORDER))
                 .text_size(px(11.5))
@@ -711,15 +727,12 @@ impl PaneView {
                         .child(format!("Replying to {}", reply.author)),
                 )
                 .child(
-                    header_cell(icon_button(
-                        "cancel-reply",
-                        Icon::Close,
-                        "Cancel reply (Esc)",
-                    ))
-                    .on_click(cx.listener(|pane, _, _, cx| {
-                        pane.reply = None;
-                        cx.notify();
-                    })),
+                    icon_button("cancel-reply", Icon::Close, "Cancel reply (Esc)").on_click(
+                        cx.listener(|pane, _, _, cx| {
+                            pane.reply = None;
+                            cx.notify();
+                        }),
+                    ),
                 )
         }))
         .child(
@@ -734,6 +747,7 @@ impl PaneView {
                             .flex()
                             .items_center()
                             .px(px(8.))
+                            .rounded_none()
                             .border_r_1()
                             .border_color(theme::color(theme::BORDER))
                             .cursor_pointer()
@@ -752,6 +766,7 @@ impl PaneView {
                     primary_button("send", "Send")
                         .h_full()
                         .px(px(12.))
+                        .rounded_none()
                         .border_0()
                         .on_click(cx.listener(|pane, _, _, cx| {
                             pane.send(cx);
@@ -759,11 +774,6 @@ impl PaneView {
                 ),
         )
     }
-}
-
-/// An action that fills the height of a split's bar, divided from what comes before it.
-fn header_cell(button: Stateful<Div>) -> Stateful<Div> {
-    bar_button(button).px(px(7.)).border_l_1()
 }
 
 fn connection_label(state: &ConnectionState) -> String {
@@ -794,27 +804,28 @@ impl Render for PaneView {
                 pane.child(self.render_channels(cx))
             })
             .when(self.search_open, |pane| {
-                let focused = self.search.focus_handle(cx).is_focused(window);
                 pane.child(
                     div()
                         .flex()
                         .flex_none()
-                        .h(px(28.))
+                        .items_center()
+                        .gap(px(4.))
+                        .pl(px(8.))
+                        .pr(px(4.))
+                        .py(px(5.))
                         .bg(theme::color(theme::PANEL))
                         .border_b_1()
-                        .border_color(theme::color(if focused {
-                            theme::ACCENT_BRIGHT
-                        } else {
-                            theme::BORDER
-                        }))
-                        .child(div().flex_1().min_w_0().h_full().child(self.search.clone()))
+                        .border_color(theme::color(theme::BORDER))
                         .child(
-                            header_cell(icon_button(
-                                "close-search",
-                                Icon::Close,
-                                "Close search (Esc)",
-                            ))
-                            .on_click(cx.listener(|pane, _, _, cx| pane.close_search(cx))),
+                            div()
+                                .flex_1()
+                                .min_w_0()
+                                .h(px(26.))
+                                .child(self.search.clone()),
+                        )
+                        .child(
+                            icon_button("close-search", Icon::Close, "Close search (Esc)")
+                                .on_click(cx.listener(|pane, _, _, cx| pane.close_search(cx))),
                         ),
                 )
             })

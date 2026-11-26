@@ -48,18 +48,10 @@ fn button_base(id: impl Into<ElementId>, label: &'static str) -> Stateful<Div> {
         .items_center()
         .justify_center()
         .h(px(22.))
+        .rounded(px(4.))
         .cursor_pointer()
         .hover(|style| style.bg(theme::color(theme::HOVER)))
         .tooltip(tooltip(label))
-}
-
-/// A button that fills the height of the bar it sits in. The caller picks the side of its hairline.
-pub fn bar_button(button: Stateful<Div>) -> Stateful<Div> {
-    button
-        .flex_none()
-        .h_full()
-        .px(px(8.))
-        .border_color(theme::color(theme::BORDER))
 }
 
 pub fn text_button(id: impl Into<ElementId>, label: impl Into<SharedString>) -> Stateful<Div> {
@@ -84,8 +76,9 @@ fn text_button_base(id: impl Into<ElementId>, label: impl Into<SharedString>) ->
         .flex()
         .flex_none()
         .items_center()
-        .h(px(24.))
-        .px(px(8.))
+        .h(px(26.))
+        .px(px(10.))
+        .rounded(px(4.))
         .border_1()
         .cursor_pointer()
         .text_size(px(11.5))
@@ -101,6 +94,7 @@ pub fn pill(label: impl Into<SharedString>, hex: u32) -> Div {
     div()
         .flex_none()
         .px(px(3.5))
+        .rounded(px(3.))
         .text_size(px(9.5))
         .line_height(px(13.))
         .font_weight(gpui::FontWeight::BOLD)
@@ -141,6 +135,7 @@ impl Render for Tooltip {
         div()
             .px_2()
             .py_1()
+            .rounded(px(5.))
             .bg(theme::color(theme::RAISED))
             .border_1()
             .border_color(theme::color(theme::BORDER))

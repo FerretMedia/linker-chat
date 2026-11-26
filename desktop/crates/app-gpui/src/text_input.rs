@@ -6,7 +6,7 @@ use gpui::{
     GlobalElementId, InspectorElementId, InteractiveElement, IntoElement, KeyBinding, LayoutId,
     MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad, ParentElement, Pixels,
     Point, Render, ShapedLine, SharedString, Style, Styled, TextRun, UTF16Selection,
-    UnderlineStyle, Window, actions, div, fill, point, px, relative, size,
+    UnderlineStyle, Window, actions, div, fill, point, prelude::FluentBuilder, px, relative, size,
 };
 
 use crate::line_editor::{LineEditor, Motion};
@@ -83,10 +83,12 @@ pub enum TextInputEvent {
     Cancelled,
 }
 
-/// A one-line text field that fills its container edge to edge. The container shows focus.
+/// A one-line text field that fills its container. Flush, the container shows focus. Boxed, it
+/// draws its own outline.
 pub struct TextInput {
     editor: LineEditor,
     placeholder: SharedString,
+    boxed: bool,
     focus_handle: FocusHandle,
     /// How far the text has scrolled left to keep the cursor in view.
     scroll: Pixels,
@@ -101,11 +103,17 @@ impl TextInput {
         Self {
             editor: LineEditor::default(),
             placeholder: placeholder.into(),
+            boxed: false,
             focus_handle: cx.focus_handle(),
             scroll: px(0.),
             last_layout: None,
             selecting: false,
         }
+    }
+
+    pub fn boxed(mut self) -> Self {
+        self.boxed = true;
+        self
     }
 
     pub fn text(&self) -> &str {
@@ -206,7 +214,8 @@ impl Focusable for TextInput {
 }
 
 impl Render for TextInput {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let focused = self.focus_handle.is_focused(window);
         div()
             .key_context(CONTEXT)
             .track_focus(&self.focus_handle)
@@ -229,6 +238,16 @@ impl Render for TextInput {
             .items_center()
             .px(px(8.))
             .bg(theme::color(theme::BACKGROUND))
+            .when(self.boxed, |field| {
+                field
+                    .rounded(px(4.))
+                    .border_1()
+                    .border_color(theme::color(if focused {
+                        theme::ACCENT_BRIGHT
+                    } else {
+                        theme::BORDER
+                    }))
+            })
             .text_size(px(12.5))
             .line_height(px(18.))
             .child(TextLine { input: cx.entity() })

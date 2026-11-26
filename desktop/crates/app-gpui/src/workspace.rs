@@ -12,7 +12,7 @@ use crate::chat::Chat;
 use crate::pane::{PaneEvent, PaneView};
 use crate::text_input::{TextInput, TextInputEvent};
 use crate::theme;
-use crate::ui::{bar_button, icon, icon_button, icon_toggle, primary_button, text_button};
+use crate::ui::{icon, icon_button, icon_toggle, primary_button, text_button};
 use crate::{settings, ui};
 
 const CONTEXT: &str = "Workspace";
@@ -91,7 +91,7 @@ impl Workspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let channel = cx.new(|cx| TextInput::new(channel_hint(Platform::Twitch), cx));
+        let channel = cx.new(|cx| TextInput::new(channel_hint(Platform::Twitch), cx).boxed());
         let subscriptions = vec![
             cx.subscribe_in(
                 &channel,
@@ -365,6 +365,7 @@ impl Workspace {
         div()
             .flex()
             .flex_none()
+            .items_center()
             .h(px(30.))
             .bg(theme::color(theme::PANEL))
             .border_b_1()
@@ -374,11 +375,8 @@ impl Workspace {
                     .flex()
                     .flex_none()
                     .items_center()
-                    .justify_center()
                     .h_full()
-                    .px(px(9.))
-                    .border_r_1()
-                    .border_color(theme::color(theme::BORDER))
+                    .px(px(10.))
                     .child(icon(Icon::Linker, theme::ACCENT_BRIGHT)),
             )
             .child(
@@ -401,32 +399,42 @@ impl Workspace {
                     })),
             )
             .child(
-                bar_button(icon_button("new-tab", Icon::Plus, "New tab (Ctrl+T)"))
-                    .border_r_1()
+                icon_button("new-tab", Icon::Plus, "New tab (Ctrl+T)")
+                    .flex_none()
+                    .ml(px(4.))
                     .on_click(
                         cx.listener(|workspace, _, window, cx| workspace.new_tab(window, cx)),
                     ),
             )
             .child(div().flex_1())
             .child(
-                bar_button(icon_button("add-split", Icon::Split, "Add a split"))
-                    .border_l_1()
-                    .on_click(cx.listener(|workspace, _, window, cx| {
-                        let mode = workspace.active_pane().read(cx).layout().mode;
-                        workspace.add_split(mode, window, cx);
-                    })),
-            )
-            .child(
-                bar_button(icon_toggle(
-                    "connect",
-                    Icon::Plug,
-                    "Connect a channel (Ctrl+K)",
-                    self.connect.open,
-                ))
-                .border_l_1()
-                .on_click(cx.listener(|workspace, _, window, cx| {
-                    workspace.toggle_connect(window, cx);
-                })),
+                div()
+                    .flex()
+                    .flex_none()
+                    .items_center()
+                    .gap(px(2.))
+                    .mr(px(4.))
+                    .child(
+                        icon_button("add-split", Icon::Split, "Add a split").on_click(cx.listener(
+                            |workspace, _, window, cx| {
+                                let mode = workspace.active_pane().read(cx).layout().mode;
+                                workspace.add_split(mode, window, cx);
+                            },
+                        )),
+                    )
+                    .child(
+                        icon_toggle(
+                            "connect",
+                            Icon::Plug,
+                            "Connect a channel (Ctrl+K)",
+                            self.connect.open,
+                        )
+                        .on_click(cx.listener(
+                            |workspace, _, window, cx| {
+                                workspace.toggle_connect(window, cx);
+                            },
+                        )),
+                    ),
             )
     }
 
@@ -445,7 +453,7 @@ impl Workspace {
             .gap_1()
             .h_full()
             .pl(px(10.))
-            .pr(px(if closable { 2. } else { 10. }))
+            .pr(px(if closable { 5. } else { 10. }))
             .border_t_2()
             .text_size(px(12.))
             .cursor_pointer()
@@ -468,8 +476,9 @@ impl Workspace {
             .when(closable, |cell| {
                 cell.child(
                     icon_button(("close-tab", index), Icon::Close, "Close tab")
-                        .h_full()
-                        .px(px(5.))
+                        .h(px(18.))
+                        .px(px(3.))
+                        .rounded(px(3.))
                         .on_click(cx.listener(move |workspace, _, window, cx| {
                             cx.stop_propagation();
                             workspace.close_tab(index, window, cx);
@@ -478,110 +487,98 @@ impl Workspace {
             })
     }
 
-    fn render_connect(&self, narrow: bool, window: &Window, cx: &mut Context<Self>) -> Div {
-        let focused = self.connect.channel.focus_handle(cx).is_focused(window);
+    fn render_connect(&self, narrow: bool, cx: &mut Context<Self>) -> Div {
         let platforms =
             div()
                 .flex()
                 .flex_none()
-                .h(px(30.))
+                .gap(px(4.))
                 .children(Platform::ALL.into_iter().map(|platform| {
-                    div()
-                        .flex()
-                        .flex_none()
-                        .when(narrow, |cell| cell.flex_1())
-                        .h_full()
-                        .border_r_1()
-                        .border_color(theme::color(theme::BORDER))
-                        .child(self.render_platform(platform, cx))
+                    self.render_platform(platform, cx)
+                        .when(narrow, |pill| pill.flex_1())
                 }));
         let channel = div()
             .flex()
-            .h(px(30.))
+            .flex_1()
+            .items_center()
+            .gap(px(6.))
             .min_w_0()
             .child(
                 div()
                     .flex_1()
-                    .min_w_0()
-                    .h_full()
+                    .min_w(px(80.))
+                    .h(px(26.))
                     .child(self.connect.channel.clone()),
             )
             .child(
-                bar_button(primary_button("connect-here", "Add to this split"))
-                    .border_0()
-                    .border_l_1()
-                    .px(px(10.))
-                    .border_color(theme::color(theme::BORDER))
-                    .on_click(cx.listener(|workspace, _, window, cx| {
+                primary_button("connect-here", "Add to this split").on_click(cx.listener(
+                    |workspace, _, window, cx| {
                         workspace.connect_channel(Destination::ActivePane, window, cx);
-                    })),
+                    },
+                )),
             )
             .child(
-                bar_button(text_button("connect-split", "Open in new split"))
-                    .border_0()
-                    .border_l_1()
-                    .px(px(10.))
-                    .on_click(cx.listener(|workspace, _, window, cx| {
+                text_button("connect-split", "Open in new split").on_click(cx.listener(
+                    |workspace, _, window, cx| {
                         workspace.connect_channel(Destination::NewSplit, window, cx);
-                    })),
+                    },
+                )),
             );
         div()
             .flex()
             .flex_none()
             .flex_col()
+            .gap(px(6.))
+            .px(px(8.))
+            .py(px(6.))
             .bg(theme::color(theme::PANEL))
             .border_b_1()
-            .border_color(theme::color(if focused {
-                theme::ACCENT_BRIGHT
-            } else {
-                theme::BORDER
-            }))
+            .border_color(theme::color(theme::BORDER))
             .map(|bar| {
                 if narrow {
-                    bar.child(platforms).child(
-                        channel
-                            .border_t_1()
-                            .border_color(theme::color(theme::BORDER)),
-                    )
+                    bar.child(platforms).child(channel)
                 } else {
-                    bar.child(div().flex().child(platforms).child(channel.flex_1()))
+                    bar.child(
+                        div()
+                            .flex()
+                            .items_center()
+                            .gap(px(6.))
+                            .child(platforms)
+                            .child(channel),
+                    )
                 }
             })
             .children(self.connect.error.clone().map(|error| {
                 div()
-                    .px(px(8.))
-                    .py(px(4.))
-                    .border_t_1()
-                    .border_color(theme::color(theme::BORDER))
-                    .bg(theme::tint(theme::BAD, 0x18))
                     .text_size(px(11.5))
                     .text_color(theme::color(theme::BAD))
                     .child(error)
             }))
     }
 
-    /// Picked like a tab: an accent line on top, in the platform's color.
+    /// Picked, it takes on the platform's color.
     fn render_platform(&self, platform: Platform, cx: &mut Context<Self>) -> Stateful<Div> {
         let picked = platform == self.connect.platform;
         let hex = theme::platform(platform);
         div()
             .id(platform.name())
             .flex()
-            .flex_grow()
+            .flex_none()
             .items_center()
             .justify_center()
-            .h_full()
-            .px(px(10.))
-            .border_t_2()
+            .h(px(24.))
+            .px(px(8.))
+            .rounded(px(4.))
+            .border_1()
             .text_size(px(11.5))
             .cursor_pointer()
-            .map(|cell| {
+            .map(|pill| {
                 if picked {
-                    cell.bg(theme::color(theme::BACKGROUND))
-                        .border_color(theme::color(hex))
+                    pill.bg(theme::tint(hex, 0x22))
+                        .border_color(theme::tint(hex, 0x66))
                         .text_color(theme::color(hex))
                 } else {
-                    cell.border_color(gpui::transparent_black())
+                    pill.border_color(gpui::transparent_black())
                         .text_color(theme::color(theme::TEXT_SECONDARY))
                         .hover(|style| style.bg(theme::color(theme::RAISED)))
                 }
@@ -644,7 +641,7 @@ impl Render for Workspace {
             .text_color(theme::color(theme::TEXT))
             .child(self.render_tabs(cx))
             .when(self.connect.open, |workspace| {
-                workspace.child(self.render_connect(stacked, window, cx))
+                workspace.child(self.render_connect(stacked, cx))
             })
             .child(
                 div()
