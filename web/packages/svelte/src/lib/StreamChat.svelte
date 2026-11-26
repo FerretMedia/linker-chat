@@ -368,7 +368,7 @@
     font-size: 12.5px;
     line-height: 1.38;
     border: 1px solid var(--lc-border);
-    border-radius: 0;
+    border-radius: 8px 8px 0 0;
     overflow: hidden;
   }
 
@@ -389,6 +389,7 @@
 
   .lc-root.lc-embedded {
     border: 0;
+    border-radius: 0;
   }
 
   .lc-root button,
@@ -409,10 +410,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0;
-    height: 30px;
-    padding: 0 0 0 10px;
-    box-sizing: border-box;
+    gap: 8px;
+    padding: 7px 10px;
     background: var(--lc-surface);
     border-bottom: 1px solid var(--lc-border);
     flex-shrink: 0;
@@ -428,18 +427,8 @@
   }
 
   .lc-header-right {
-    gap: 0;
-    height: 100%;
+    gap: 8px;
     flex-shrink: 0;
-  }
-
-  .lc-header .lc-identity,
-  .lc-viewers {
-    height: 100%;
-    display: flex;
-    align-items: center;
-    padding: 0 9px;
-    border-left: 1px solid var(--lc-border);
   }
 
   .lc-identity {
@@ -480,7 +469,7 @@
     line-height: 1.3;
     padding: 0 4px;
     border: 1px solid var(--lc-border);
-    border-radius: 0;
+    border-radius: 3px;
     background: var(--lc-raised);
     color: var(--lc-secondary);
   }
@@ -497,10 +486,10 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 4px 0;
+    padding: 6px;
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 1px;
   }
 
   .lc-empty {
@@ -510,8 +499,8 @@
 
   .lc-msg {
     position: relative;
-    padding: 2px 8px;
-    border-radius: 0;
+    padding: 2px 6px;
+    border-radius: 4px;
     overflow-wrap: anywhere;
   }
   .lc-msg:hover {
@@ -545,7 +534,7 @@
     letter-spacing: 0.02em;
     text-transform: uppercase;
     padding: 1px 4px;
-    border-radius: 0;
+    border-radius: 3px;
     vertical-align: 1px;
     background: #26262c;
     color: #a1a1aa;
@@ -593,7 +582,7 @@
   .lc-mention {
     background: rgb(69 69 230 / 22%);
     color: var(--lc-mention);
-    border-radius: 0;
+    border-radius: 3px;
     padding: 0 2px;
     font-weight: 600;
   }
@@ -605,13 +594,12 @@
   .lc-actions {
     display: none;
     position: absolute;
-    right: 0;
-    top: 0;
+    right: 6px;
+    top: 1px;
     background: var(--lc-surface);
     border: 1px solid var(--lc-border);
-    border-right: 0;
-    border-radius: 0;
-    padding: 0;
+    border-radius: 5px;
+    padding: 1px 2px;
   }
   .lc-msg:hover .lc-actions {
     display: inline-flex;
@@ -624,10 +612,7 @@
     font-size: 11px;
     line-height: 1.3;
     padding: 2px 6px;
-    border-radius: 0;
-  }
-  .lc-act-btn + .lc-act-btn {
-    border-left: 1px solid var(--lc-border);
+    border-radius: 3px;
   }
   .lc-act-btn:hover {
     color: var(--lc-text);
@@ -644,22 +629,28 @@
     border-left: 2px solid var(--lc-accent);
   }
 
+  /* Negative top margin cancels the pill's height, so it floats over the
+     list 8px above whatever follows (error banner or composer). */
   .lc-pause-pill {
+    position: relative;
+    z-index: 1;
     flex-shrink: 0;
-    width: 100%;
+    align-self: center;
+    max-width: calc(100% - 16px);
     height: 24px;
-    margin: 0;
+    margin: -32px 0 8px;
     background: var(--lc-accent);
     color: #fff;
     border: 0;
-    border-top: 1px solid var(--lc-accent-bright);
-    border-radius: 0;
-    padding: 0 10px;
+    border-radius: 999px;
+    padding: 0 12px;
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
-    box-shadow: none;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 35%);
   }
   .lc-pause-pill:hover {
     background: var(--lc-accent-hover);

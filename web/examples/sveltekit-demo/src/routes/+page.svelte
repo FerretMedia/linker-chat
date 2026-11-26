@@ -68,7 +68,7 @@
         {room}
         {getToken}
         {theme}
-        embedded={true}
+        embedded={false}
         allowGuests={true}
         emotes={{ sevenTvGlobal: true, bttvGlobal: true }}
       />
@@ -79,20 +79,19 @@
 <style>
   .layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 350px;
+    grid-template-columns: minmax(0, 1fr) 356px;
     grid-template-rows: minmax(0, 1fr);
     height: 100dvh;
-    gap: 0;
-    padding: 0;
+    gap: 10px;
+    padding: 10px;
     box-sizing: border-box;
   }
 
   .stage {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 10px;
     min-width: 0;
-    border-right: 1px solid #26262c;
   }
 
   .player-shell {
@@ -100,9 +99,8 @@
     min-height: 180px;
     display: flex;
     flex-direction: column;
-    border: 0;
-    border-radius: 0;
-    border-bottom: 1px solid #26262c;
+    border: 1px solid #26262c;
+    border-radius: 8px;
     overflow: hidden;
     background:
       radial-gradient(ellipse 55% 60% at 0% 0%, rgb(69 69 230 / 22%), transparent 70%),
@@ -114,19 +112,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 34px;
-    padding: 0 12px 0 0;
-    box-sizing: border-box;
-    border-bottom: 1px solid #26262c;
+    gap: 8px;
+    padding: 10px 14px;
   }
 
   .brand {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    height: 100%;
-    padding: 0 12px;
-    border-right: 1px solid #26262c;
+    gap: 8px;
     font-size: 13px;
     font-weight: 600;
     letter-spacing: -0.01em;
@@ -153,6 +146,7 @@
     height: 7px;
     border-radius: 999px;
     background: currentColor;
+    box-shadow: 0 0 8px rgb(255 49 49 / 60%);
   }
 
   .player-copy {
@@ -186,28 +180,18 @@
   .controls {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    gap: 0;
+    gap: 8px;
     background: #111115;
-    border: 0;
-    border-radius: 0;
-    padding: 0;
+    border: 1px solid #26262c;
+    border-radius: 8px;
+    padding: 10px 12px;
   }
 
   .controls label {
     display: grid;
-    gap: 0;
-    padding: 6px 10px;
-    border-bottom: 1px solid #26262c;
+    gap: 4px;
     font-size: 11px;
     color: #a1a1aa;
-  }
-
-  .controls label:first-child {
-    border-right: 1px solid #26262c;
-  }
-
-  .controls label:focus-within {
-    box-shadow: inset 0 0 0 1px #6d6dff;
   }
 
   .controls .wide,
@@ -218,14 +202,18 @@
   .controls input {
     width: 100%;
     box-sizing: border-box;
-    background: transparent;
+    background: #09090b;
     color: #fafafa;
-    border: 0;
-    border-radius: 0;
-    padding: 3px 0 0;
+    border: 1px solid #26262c;
+    border-radius: 5px;
+    padding: 6px 8px;
     font: inherit;
     font-size: 12.5px;
     outline: none;
+  }
+
+  .controls input:focus {
+    border-color: #6d6dff;
   }
 
   .controls input::placeholder {
@@ -237,19 +225,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0;
-    padding: 0;
-    height: 32px;
+    gap: 8px;
   }
 
   .row button {
-    height: 100%;
     background: #16161c;
     color: #fafafa;
-    border: 0;
-    border-right: 1px solid #26262c;
-    border-radius: 0;
-    padding: 0 12px;
+    border: 1px solid #26262c;
+    border-radius: 5px;
+    padding: 5px 12px;
     font: inherit;
     font-size: 12px;
     font-weight: 500;
@@ -261,7 +245,6 @@
   }
 
   .row a {
-    padding: 0 12px;
     color: #a1a1aa;
     text-decoration: none;
     font-size: 12px;
@@ -274,23 +257,19 @@
   .row button:focus-visible,
   .row a:focus-visible {
     outline: 2px solid #6d6dff;
-    outline-offset: -2px;
+    outline-offset: 2px;
   }
 
+  /* The chat's square composer sits flush on the viewport's bottom edge. */
   .chat-dock {
     min-height: 0;
-    height: 100%;
+    margin-bottom: -10px;
   }
 
   @media (max-width: 900px) {
     .layout {
       grid-template-columns: minmax(0, 1fr);
       grid-template-rows: auto minmax(460px, 1fr);
-    }
-
-    .stage {
-      border-right: 0;
-      border-bottom: 1px solid #26262c;
     }
   }
 </style>
